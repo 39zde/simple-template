@@ -1,0 +1,368 @@
+:root {
+    --color-primary-light: hsl(224, 90%, 77%);
+    --color-primary: hsl(224, 90%, 64%);
+    --color-primary-dark: #112e80;
+    --color-focus: #e56700;
+    --color-focus-light: #ffc188;
+    --color-error: hsl(0, 55%, 66%);
+    --color-success: #1fbf41;
+
+    --light: #FAF9F6;
+    --gray: #82817d;
+    --dark: #010613;
+
+    --shortcut-list-width: 288px;
+    --shortcut-list-handle-width: 20px;
+    --shortcut-width: 320px;
+
+    --label-padding: 12px;
+    --label-min-width: 360px;
+    --input-min-width: 128px;
+    --input-height: 42px;
+}
+
+@media screen and (prefers-color-scheme: light) {
+    :root {
+        --color-light: #FAF9F6;
+        --color-gray: hsl(48, 2%, 40%);
+        --color-gray-light: color-mix(in hsl, var(--color-gray) 20%, #ffffff00 80%);
+        --color-dark: #010613;
+
+        --shadow: 0px 2px 6px -1px var(--color-gray);
+    }
+}
+
+@media screen and (prefers-color-scheme: dark) {
+    :root {
+        --color-light: #010613;
+        --color-gray: hsl(48, 2%, 60%);
+        --color-gray-light: color-mix(in hsl, var(--color-gray) 20%, #00000000 80%);
+        --color-dark: #FAF9F6;
+
+        --shadow: 0px 2px 3px 0px #3a3a3a;
+    }
+}
+
+/* Elements */
+
+html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--color-light);
+    color: var(--color-dark);
+    font-weight: 500;
+    letter-spacing: normal;
+    height: 100vh;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: .5fr 9fr .5fr;
+    margin: 0;
+}
+
+header {
+    border-bottom: 1px solid var(--color-gray);
+    text-align: center;
+    padding: 6px;
+
+    &>small {
+        color: var(--color-gray);
+    }
+}
+
+h1,
+h2,
+h3 {
+    margin: 0;
+    padding: 0;
+}
+
+h2 {
+    font-size: large;
+    font-weight: 600;
+}
+
+a {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+main {
+    display: flex;
+    flex-direction: row;
+    justify-content: stretch;
+    align-items: stretch;
+    flex-wrap: nowrap;
+}
+
+article {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    transition: width 100ms linear;
+    flex: 1;
+}
+
+/*  Keyboard Shortcuts */
+
+aside {
+    height: 100%;
+    width: var(--shortcut-list-handle-width);
+    transition: width 100ms linear;
+    border-right: 1px solid var(--color-gray);
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.toggle-shortcuts-label {
+    width: var(--shortcut-list-handle-width);
+    max-width: var(--shortcut-list-handle-width);
+    height: 100%;
+    position: relative;
+    border-radius: 0;
+    box-shadow: unset;
+    border: none;
+    outline: none;
+    overflow: hidden;
+    cursor: pointer;
+
+    &:hover {
+        outline: none;
+        border: none;
+        background: var(--color-gray-light);
+    }
+
+    &>#toggle-shortcuts {
+        appearance: none;
+        max-width: var(--shortcut-list-handle-width);
+
+    }
+}
+
+.toggle-shortcuts-label:has(#toggle-shortcuts:not(:checked))::before {
+    content: "►";
+    text-align: center;
+    font-size: var(--shortcut-list-handle-width);
+    position: absolute;
+    color: var(--color-dark);
+    height: var(--shortcut-list-handle-width);
+    width: var(--shortcut-list-handle-width);
+    top: 0;
+    bottom: 0;
+    right: 0;
+    margin: auto 0;
+}
+
+.toggle-shortcuts-label:has(#toggle-shortcuts:checked)::before {
+    content: "◄";
+    text-align: center;
+    font-size: var(--shortcut-list-handle-width);
+    position: absolute;
+    height: var(--shortcut-list-handle-width);
+    width: var(--shortcut-list-handle-width);
+    top: 0;
+    bottom: 0;
+    right: 0;
+    margin: auto 0;
+    color: var(--color-dark);
+
+}
+
+#shortcuts {
+    padding-left: 12px;
+    flex-wrap: nowrap;
+    width: var(--shortcut-list-width);
+    min-width: var(--shortcut-list-width);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-x: hidden;
+    overflow: hidden;
+    display: none;
+
+    &>h3 {
+        margin-bottom: 6px;
+        margin-top: 12px;
+        text-decoration: underline;
+    }
+
+    &>ul {
+        margin: 0;
+        padding: 0;
+
+        &>li {
+            display: flex;
+            gap: 12px;
+            margin: 6px 0;
+        }
+    }
+
+
+}
+
+span.letter-display {
+    display: flex;
+    margin: 6px 0;
+    width: 100%;
+
+    &>span {
+        display: inline-flex;
+        text-decoration: none;
+    }
+}
+
+kbd {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    background: linear-gradient(-45deg, white, hsl(200, 22%, 86%));
+    box-shadow: inset 0 -2px 0 0 hsl(200, 32%, 86%), inset 0 0 1px 1px white, 0 1px 2px 1px var(--color-gray);
+    color: var(--dark);
+    height: 18px;
+    padding: 1px;
+    width: 22px;
+    margin-left: 6px;
+    font-family: monospace;
+    font-size: 16px;
+}
+
+aside:has(.toggle-shortcuts-label):has(#toggle-shortcuts:checked) {
+    width: var(--shortcut-width);
+
+    &>#shortcuts {
+        display: flex;
+    }
+}
+
+@media (prefers-reduced-motion),
+(max-aspect-ratio: 1/1) and (width < 750px) {
+    aside {
+        display: none;
+    }
+}
+
+/*  Notification Styles */
+
+output#notification {
+    width: fit-content;
+    position: absolute;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--color-light);
+    border-radius: calc(var(--input-height) /2);
+    top: var(--label-padding);
+    z-index: 10;
+    padding: var(--label-padding);
+    height: fit-content;
+    display: none;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    background-color: var(--color-light);
+    text-align: center;
+    margin: var(--label-padding);
+    white-space: break-spaces;
+}
+
+output.error#notification {
+    border-color: var(--color-error);
+    display: block;
+}
+
+output.success#notification {
+    border-color: var(--color-success);
+    display: block;
+}
+
+output.progress#notification {
+    border-color: var(--color-primary);
+    display: block;
+}
+
+/* Inputs */
+
+input[type="button"],
+button {
+    height: var(--input-height);
+    min-width: var(--input-min-width);
+    border-radius: calc(var(--input-height) /2);
+    border: 2px solid var(--color-primary);
+    background-color: inherit;
+    color: inherit;
+    text-align: center;
+    font-weight: 500;
+    font-size: 20px;
+    cursor: pointer;
+
+    &:hover {
+        &:not(:disabled) {
+            background-color: var(--color-primary);
+        }
+    }
+
+    &:disabled {
+        border-color: var(--color-gray);
+        color: var(--color-gray);
+        cursor: not-allowed;
+    }
+
+}
+
+select {
+    height: var(--input-height);
+    min-width: var(--input-min-width);
+    border-radius: calc(var(--input-height) /2);
+    border: 2px solid var(--color-primary);
+    background: var(--color-light);
+    color: inherit;
+    text-align: center;
+    font-weight: 500;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+
+/* Footer */
+
+footer {
+    text-align: center;
+    align-content: end;
+    border-top: 1px solid var(--color-gray);
+    padding: 6px;
+}
+
+span#save-html-notice {
+    display: inline;
+}
+
+a#save-html {
+    cursor: pointer;
+}
+
+body>output.noscripterror.error#notification {
+    cursor: not-allowed;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    top: 90px;
+}
+
+/* Styles */
+
+/*
+    [TEMPLATE]
+*/
