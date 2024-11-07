@@ -6,13 +6,15 @@ Everything marked with `[TEMPLATE]` must be replaced.
 
 ### Development
 
-I'd like to keep this project free from dependencies. This also means no devtools, no package.json, no TypeScript, no versioning. Given the project size (in the future and now) none of this would be worth it.
+I'd like to keep this project free from dependencies. This also means no devtools, no package.json, no TypeScript, no development git branches. Given the project size (in the future and now) none of this would be worth it.
 There is 1 point, which I declare as exceptions:
 - the use of JsDoc[^4], because it improves the readability, most IDE support it and it's inside of comments. It's plain and simple, therefore worth it.
 
 ### License
 
-Licensed under the MIT License. Copyright (c) 2024 39zde.
+Licensed under the MIT License.
+
+Copyright © 2024 39zde.
 
  See [LICENSE](./LICENSE).
 
