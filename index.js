@@ -363,7 +363,7 @@ class UtilityFunctions {
 			)
 			.replaceAll(/(?<simple_comment>(?<=(?<![\"\']))[\/]{2,}.*)/g, "")
 			// fill missing semicolons
-			.replaceAll(/(?<=[^\s;\{\[\}\|\,\(\:\>\=])(?=(\s*[\r\n]))(?![\s\t\n]{0,}[\.\)])/g, ";")
+			.replaceAll(/(?<=[^\s;\{\[\}\|\,\(\:\>\=\*\+\-\/\%\?])(?=(\s*[\r\n]))(?![\s\t\n]{0,}[\.\)])/g, ";")
 			// minify
 			.replaceAll(/[\s\t]{0,}\n[\s\t]{0,}|\t/g, "");
 
