@@ -330,7 +330,7 @@ footer {
 
 span#save-html-notice,
 tr#save-html-shortcut {
-    display: auto;
+    display: contents;
 }
 
 a#save-html {

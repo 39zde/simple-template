@@ -1,12 +1,21 @@
-/**
- * @file main.js
- * @module MAIN
- **/
+"use strict";
 /**
  * @class MainFunctions
  */
 export class MainFunctions {
 	constructor() {}
+	/**
+	 * @method
+	 * @description check if compatibility is ensured
+	 * @returns {boolean} true if compatible
+	 */
+	checkBrowserCompatibility() {
+		// add more [Template] conditions as needed
+		if (!ArrayBuffer.prototype.hasOwnProperty("resizable") || !ArrayBuffer.prototype.hasOwnProperty("transferToFixedLength")) {
+			return false;
+		}
+		return true;
+	}
 	// [TEMPLATE]
 	// App specific functions
 }

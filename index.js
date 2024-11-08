@@ -1,9 +1,5 @@
 "use strict";
-/**
- * @module INDEX
- * @requires module:MAIN
- */
-import { MainFunctions, main } from "./src/main";
+import { MainFunctions, main } from "./src/main.js";
 
 /**
  * @class UtilityFunctions
@@ -21,22 +17,6 @@ class UtilityFunctions {
 		this.messageElement = messageElement;
 		this.shortcutDiv = shortcutDiv;
 		this.shortcutToggle = shortcutToggle;
-	}
-
-	/**
-	 * @method
-	 * @description check if compatibility is ensured
-	 * @returns {boolean} true if compatible
-	 */
-	checkBrowserCompatibility() {
-		if (
-			!ArrayBuffer.prototype.hasOwnProperty("resizable") ||
-			window.CompressionStream === undefined ||
-			!ArrayBuffer.prototype.hasOwnProperty("transferToFixedLength")
-		) {
-			return false;
-		}
-		return true;
 	}
 
 	/**
@@ -97,7 +77,7 @@ class UtilityFunctions {
 	 */
 	cycler(selectElement) {
 		let options;
-		if (this === undefined) {
+		if (!this) {
 			options = Array.from(selectElement.querySelectorAll("OPTION"));
 		} else {
 			options = this.#selectChildrenOf(selectElement, "OPTION");
@@ -259,59 +239,141 @@ class UtilityFunctions {
 	 * @returns {Promise<null>}
 	 */
 	async saveHtmlFile() {
+		// hide any open messages
 		await this.displayMessage("hide");
 		const encoder = new TextEncoder();
 		let html = document.children[0].outerHTML;
-		let css;
-		let js;
-		// get styles and script
-		let requests = await Promise.all([fetch(document.styleSheets[0].href, { method: "GET" }), fetch(document.scripts[0].src, { method: "GET" })])
-			.catch((e) => {
-				throw new Error("Failed to fetch style/script to compose file");
-			})
-			.catch((error) => {
-				throw new Error(error);
-			});
+		// put styles into html
+		html = await this.#saveCSS(html, document.styleSheets[0]);
+		html = await this.#saveJS(html, document.scripts[0]);
 
-		for await (let request of requests) {
-			if (request.ok) {
-				// store them in variables as text
-				if (request.url.endsWith("css")) {
-					css = await request.text();
-				}
-				if (request.url.endsWith("js")) {
-					js = await request.text();
-				}
-			}
-		}
-
-		// don't show the html download option
-		css = css.replace(/(?<=span\#save-html-notice[\s]{0,},[\n\s]{0,}tr\#save-html-shortcut[\n\s]{0,}{[\n\s]{0,}display:[\s]{0,})auto/gm, "none");
-
-		for (let link of document.querySelectorAll("link")) {
-			if (link.rel !== "stylesheet") {
-				// remove any link, which is not the stylesheet one
-				html = html.replace(link.outerHTML, "");
-			} else {
-				// remove the link to stylesheet and insert inline style
-				html = html.replace(link.outerHTML, `\<style\>${css}\</style\>`);
-			}
-		}
-		// set the CSP, to allow to use this style
-		let cssHash = await this.getHash(css);
-		html = html.replace("style-src 'self'", `style-src 'sha256-${cssHash}'`);
-		// remove the script t and insert the inline script
-		html = html.replace(document.querySelector("script").outerHTML, `\<script type="module"\>${js}\</script\>`);
-		// set the CSP, to allow to execute this script.
-		let jsHash = await this.getHash(js);
-		html = html.replace("script-src 'self'", `script-src 'sha256-${jsHash}'`);
 		// remove the base tag
 		let baseTag = document.querySelector("base");
 		if (baseTag) {
 			html = html.replace(baseTag.outerHTML, "");
 		}
+		// remove favicon
+		let faviconTag = document.querySelector("link[rel='icon']");
+		if (faviconTag) {
+			html = html.replace(faviconTag.outerHTML, "");
+		}
+		// remove  style preload
+		let preloadLink = document.querySelector("link[rel='preload']");
+		if (preloadLink) {
+			html = html.replace(preloadLink.outerHTML, "");
+		}
+		// remove 3rd party html elements
+		let footer = document.querySelector("footer");
+		if (footer) {
+			let thirdPartyElement = footer.nextSibling;
+			while (thirdPartyElement) {
+				if (thirdPartyElement instanceof HTMLElement || thirdPartyElement instanceof Comment) {
+					html = html.replace(thirdPartyElement.outerHTML, "");
+				}
+				thirdPartyElement = thirdPartyElement.nextSibling;
+			}
+		}
 
-		return this.downloadFile(encoder.encode("<!doctype html>\n" + html).buffer, "text/html", "simple-file-compressor");
+		return this.downloadFile(encoder.encode("<!doctype html>" + html).buffer, "text/html", "simple-file-compressor");
+	}
+
+	/**
+	 * replates the given stylesheet link and all of its imports with inline `<style>` .
+	 * @param {string} html html file as a string
+	 * @param {CSSStyleSheet} sheet
+	 * @returns {Promise<string>} html with inlined css
+	 */
+	async #saveCSS(html, sheet) {
+		let css = "";
+		let importedCss = "";
+		for (const rule of sheet.cssRules) {
+			if (rule instanceof CSSImportRule) {
+				for (const importedRule of rule.styleSheet.cssRules) {
+					importedCss += importedRule.cssText;
+				}
+			}
+			css += rule.cssText;
+		}
+		// append the imported css
+		css += importedCss;
+		// don't show the html download option
+		css = css.replace(/(?<=span\#save-html-notice[\s]{0,},[\n\s]{0,}tr\#save-html-shortcut[\n\s]{0,}{[\n\s]{0,}display:[\s]{0,})contents/gm, "none");
+		// remove the css import statement
+		css = css.replace(/\@import[\s]{0,}(url\([\s]{0,})?[\"\']{0,}\.?(\/?[\w]+\/?){0,}(\.css)?[\"\']{0,}([\s]{0,}\))?[\s\n]{0,}\;/gm, "");
+		// minify
+		css = css.replaceAll("\n", "");
+		// set the CSP, to allow to use this style
+		let cssHash = await this.getHash(css);
+		if (!cssHash) {
+			throw new Error("Failed to update CSP for style-src");
+		}
+		html = html.replace(/(?<=style-src[\s\t]{1,}((?<directive>[\"\'][^\s]+[\"\'])[\s]{0,}){1,})(?=;)/, `' sha256-${cssHash}'`);
+
+		html = html.replace(sheet.ownerNode.outerHTML, `<style>${css}</style>`);
+		return html;
+	}
+
+	/**
+	 * save a script and it's imports as a inline script
+	 * @param {string} html
+	 * @param {HTMLScriptElement} scriptElem
+	 * @returns {Promise<string>}
+	 */
+	async #saveJS(html, scriptElem) {
+		let js = "";
+		const request = await fetch(scriptElem.src, { method: "GET" });
+		if (!request.ok) {
+			throw new Error("Failed to load script");
+		}
+		const result = await request.text();
+		if (!result) {
+			throw new Error("Failed to parse script into text");
+		}
+		const importStatements = result.match(
+			/import[\s]{0,}\{?([\s]{0,}[\w]+[\s]{0,}\,?[\s]{0,}){0,}\}?[\s]{0,}from[\s]{0,}[\'\"]\.?(\/?[\w]+\/?){0,}(\.[mc]?js)?[\'\"]\;?/gm,
+		);
+		if (!importStatements[0]) {
+			throw new Error("Failed to match script imports");
+		}
+		js = result.replace(importStatements[0], "");
+		const importsPath = importStatements[0].match(/(?<=[\"\']\.?)(\/?[\w]+\/?){0,}(\.[mc]?js)(?=[\"\']\;?)/gm);
+		if (!importsPath[0]) {
+			throw new Error("Failed to match script script imports path");
+		}
+		if (importsPath[0].startsWith("/")) {
+			importsPath[0] = importsPath[0].replace("/", "");
+		}
+		const importedScriptRequest = await fetch(location.protocol + "//" + location.host + "/" + importsPath[0]);
+		if (!importedScriptRequest.ok) {
+			throw new Error("Failed to fetch imported script");
+		}
+		const importedScript = await importedScriptRequest.text();
+		if (!importedScript) {
+			throw new Error("Failed to parse imported script into text");
+		}
+		importedScript.replace(`"use strict";`, "");
+		js += importedScript.replaceAll(/(?<!\[\'\"\)])export(?![\"\'\(])/gm, "");
+		js = js
+			// replace Js Comments
+			.replaceAll(
+				/(?<comment_start>\/[\*]{1,})(?<comment>((?<no_newline>.*)|(?<newline>\r?\n)(?<jsdoc>[\s\t]{0,}\*(.*)?)*\k<newline>))(?<comment_end>[\s\t]{0,}[\*]{1,}\/)/g,
+				"",
+			)
+			.replaceAll(/(?<simple_comment>(?<=(?<![\"\']))[\/]{2,}.*)/g, "")
+			// fill missing semicolons
+			.replaceAll(/(?<=[^\s;\{\[\}\|\,\(\:\>\=])(?=(\s*[\r\n]))(?![\s\t\n]{0,}[\.\)])/g, ";")
+			// minify
+			.replaceAll(/[\s\t]{0,}\n[\s\t]{0,}|\t/g, "");
+
+		// replace old with new inline script
+		html = html.replace(scriptElem.outerHTML, `<script type="module"\>${js}\</script\>`);
+		const jsHash = await this.getHash(js);
+		if (!jsHash) {
+			throw new Error("Failed to update CSP for script-src");
+		}
+		// update the csp
+		html = html.replace(/(?<=script-src[\s\t]{1,}((?<directive>[\"\'][^\s]+[\"\'])[\s]{0,}){1,})(?=;)/gm, ` 'sha256-${jsHash}'`);
+		return html;
 	}
 }
 
@@ -344,9 +406,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		util.toggleKeyShortcuts();
 	});
 
-	document.addEventListener("keydown", (event) => {
-		console.log(event);
-		if (event.key == "ArrowRight" || event.key == "ArrowLeft") {
+	window.addEventListener("keydown", (event) => {
+		if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
 			util.toggleKeyShortcuts();
 		} else if (event.key.toLowerCase() === "s" && event.composed && (event.altKey || event.shiftKey || event.ctrlKey || event.metaKey)) {
 			event.preventDefault();
@@ -359,32 +420,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		// [TEMPLATE]
 	};
 	const funcs = new MainFunctions();
+	if (!funcs.checkBrowserCompatibility()) {
+		util.displayMessage("error", "Your current Browser version does not support this application.\nConsider updating!");
+	}
 	main(elementIDs, util, funcs);
 });
-
-/**
- * @file index.js
- * @author 39zde <git@39zde>
- * @license MIT
- * MIT License
- *
- * Copyright (c) 2024 39zde
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
