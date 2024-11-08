@@ -278,7 +278,8 @@ class UtilityFunctions {
 	}
 
 	/**
-	 * replates the given stylesheet link and all of its imports with inline `<style>` .
+	 * replates the given stylesheet link and all of its imports with inline `<style>`.
+	 * @private
 	 * @param {string} html html file as a string
 	 * @param {CSSStyleSheet} sheet
 	 * @returns {Promise<string>} html with inlined css
@@ -315,6 +316,7 @@ class UtilityFunctions {
 
 	/**
 	 * save a script and it's imports as a inline script
+	 * @private
 	 * @param {string} html
 	 * @param {HTMLScriptElement} scriptElem
 	 * @returns {Promise<string>}
