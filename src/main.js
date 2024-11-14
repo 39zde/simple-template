@@ -16,6 +16,13 @@ export class MainFunctions {
 		}
 		return true;
 	}
+
+	/**
+	 * @method
+	 * @description handle app specific key shortcuts
+	 */
+	handleKeyShortcuts() {}
+
 	// [TEMPLATE]
 	// App specific functions
 }
