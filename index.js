@@ -308,8 +308,7 @@ class UtilityFunctions {
 		if (!cssHash) {
 			throw new Error("Failed to update CSP for style-src");
 		}
-		html = html.replace(/(?<=style-src[\s\t]{1,})((?<directive>[\"\'][^\s]+[\"\'])[\s]{0,})+(?=\;)/, ` 'sha256-${cssHash}'`);
-
+		html = html.replace(/(?<=style-src[\s\t]{1,})((?<directive>[\"\'][^\s]+[\"\'])[\s]{0,})+(?=\;)/gm, ` 'sha256-${cssHash}'`);
 		html = html.replace(sheet.ownerNode.outerHTML, `<style>${css}</style>`);
 		return html;
 	}
@@ -379,7 +378,7 @@ class UtilityFunctions {
 			throw new Error("Failed to update CSP for script-src");
 		}
 		// update the csp
-		html = html.replace(/(?<=script-src[\s\t]{1,})((?<directive>[\"\'][^\s]+[\"\'])[\s]{0,})+(?=\;)/, ` 'sha256-${jsHash}'`);
+		html = html.replace(/(?<=script-src[\s\t]{1,})((?<directive>[\"\'][^\s]+[\"\'])[\s]{0,})+(?=\;)/gm, ` 'sha256-${jsHash}'`);
 		return html;
 	}
 }
